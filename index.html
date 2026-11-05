@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Заявки й документи</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+/* Концепція: бланки на сталевому столі логістичної компанії. Яскравий елемент один — штамп рішення. */
+:root{
+  --desk:#E4E9EF; --paper:#FFFFFF; --paper-2:#F5F7FA; --ink:#14223D; --ink-2:#55627A; --line:#D3DAE3;
+  --amber:#E39A2C; --amber-soft:#FCEFD9; --ok:#1F7A4E; --no:#B0343A; --focus:#2F6FDE;
+  --shadow:0 1px 0 rgba(20,34,61,.06), 0 8px 24px -12px rgba(20,34,61,.25);
+  --display:"Unbounded","Onest",system-ui,sans-serif; --body:"Onest",system-ui,"Segoe UI",sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#0F151E; --paper:#18212D; --paper-2:#1E2836; --ink:#E6EBF2; --ink-2:#9BA8BA; --line:#2B3746;
+  --amber:#F0AE4B; --amber-soft:#3A2B12; --ok:#5BC48C; --no:#EF7E84; --focus:#7FA8F5;
+  --shadow:0 1px 0 rgba(0,0,0,.3), 0 10px 28px -14px rgba(0,0,0,.7); color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --desk:#0F151E; --paper:#18212D; --paper-2:#1E2836; --ink:#E6EBF2; --ink-2:#9BA8BA; --line:#2B3746;
+  --amber:#F0AE4B; --amber-soft:#3A2B12; --ok:#5BC48C; --no:#EF7E84; --focus:#7FA8F5;
+  --shadow:0 1px 0 rgba(0,0,0,.3), 0 10px 28px -14px rgba(0,0,0,.7); color-scheme:dark;}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--desk);color:var(--ink);font:16px/1.55 var(--body);padding:28px 16px 64px;
+  background-image:radial-gradient(var(--line) .6px, transparent .6px);background-size:18px 18px}
+.wrap{max-width:960px;margin:0 auto;display:grid;gap:20px;grid-template-columns:minmax(0,1fr)}
+[hidden]{display:none!important}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+/* шапка */
+header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:16px}
+.brand{display:flex;gap:14px;align-items:center}
+.brand svg{flex:none}
+h1{font:700 clamp(1.6rem,4vw,2.25rem)/1.05 var(--display);margin:0;letter-spacing:-.01em}
+.sub{margin:6px 0 0;color:var(--ink-2);font-size:.95rem}
+.who{display:flex;align-items:center;gap:12px;background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:6px 6px 6px 16px;box-shadow:var(--shadow)}
+.who .nm{font-weight:600;line-height:1.2}
+.who .dp{display:block;font-size:.8rem;color:var(--ink-2);font-weight:400}
+.role{font-size:.78rem;font-weight:600;padding:4px 10px;border-radius:999px;background:var(--amber-soft);color:var(--ink)}
+
+/* кнопки й поля */
+button{font:600 .95rem/1 var(--body);border-radius:10px;padding:11px 16px;cursor:pointer;border:1px solid var(--line);background:var(--paper);color:var(--ink)}
+button:hover{border-color:var(--ink-2)}
+button.primary{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+button.primary:hover{filter:brightness(1.15)}
+button.ghost{background:transparent;border-color:transparent;color:var(--ink-2);padding:8px 12px}
+button.ghost:hover{color:var(--ink)}
+button.okb{background:var(--ok);border-color:var(--ok);color:var(--paper)}
+button.nob{color:var(--no);border-color:var(--no);background:transparent}
+button:disabled{opacity:.5;cursor:not-allowed}
+label{display:grid;gap:6px;font-size:.88rem;font-weight:600;color:var(--ink)}
+input,select,textarea{font:400 1rem/1.4 var(--body);color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:11px 12px;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--focus);outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--focus) 22%,transparent)}
+textarea{min-height:110px;resize:vertical}
+.hint{font-weight:400;color:var(--ink-2);font-size:.82rem}
+.msg{font-size:.9rem;color:var(--ink-2);margin:0}
+.msg.err{color:var(--no)} .msg.ok{color:var(--ok);font-weight:600}
+.notice{padding:12px 16px;border-radius:12px;background:var(--amber-soft);font-size:.92rem}
+
+/* вхід */
+.sheet{background:var(--paper);border:1px solid var(--line);border-radius:4px 14px 14px 14px;box-shadow:var(--shadow);padding:28px;min-width:0}
+.login{display:grid;gap:14px;justify-items:start;max-width:560px}
+.login h2{font:700 1.3rem/1.25 var(--display);margin:0}
+.demo{display:flex;gap:8px;flex-wrap:wrap}
+
+/* теки-вкладки */
+.folder{display:grid}
+.tabs{display:flex;gap:4px;padding-left:10px;overflow-x:auto;scrollbar-width:none}
+.tab{all:unset;flex:none;white-space:nowrap;cursor:pointer;padding:11px 18px 12px;font-weight:600;color:var(--ink-2);background:var(--paper-2);border:1px solid var(--line);border-bottom:none;border-radius:12px 12px 0 0;position:relative;top:1px}
+.tab[aria-selected="true"]{background:var(--paper);color:var(--ink);z-index:1}
+.tab:focus-visible{outline:2px solid var(--focus)}
+.count{display:inline-grid;place-items:center;min-width:22px;height:22px;margin-left:8px;padding:0 6px;border-radius:999px;background:var(--amber);color:#1b1404;font-size:.78rem;font-weight:700}
+.folder .sheet{border-radius:4px 14px 14px 14px}
+
+/* бланк нової заявки */
+.form{display:grid;gap:18px;max-width:680px}
+.types{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;border:none;padding:0;margin:0}
+.types legend{font-size:.88rem;font-weight:600;margin-bottom:6px;padding:0}
+.types label{position:relative;display:block;cursor:pointer}
+.types input{position:absolute;opacity:0;pointer-events:none}
+.types span{display:grid;gap:2px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--paper);font-weight:600;font-size:.92rem;height:100%}
+.types small{font-weight:400;color:var(--ink-2);font-size:.78rem}
+.types input:checked + span{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink);background:var(--paper-2)}
+.types input:focus-visible + span{outline:2px solid var(--focus);outline-offset:2px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.drop{position:relative;display:grid;gap:4px;justify-items:start;padding:18px;border:1.5px dashed var(--ink-2);border-radius:12px;background:var(--paper-2);font-weight:400}
+.drop.over{border-color:var(--amber);background:var(--amber-soft)}
+.drop input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;padding:0}
+.drop b{font-weight:600}
+.chosen{display:flex;flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none}
+.chosen li{font-size:.85rem;padding:5px 10px;border-radius:8px;background:var(--paper);border:1px solid var(--line)}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+
+/* списки й картки-бланки */
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.toolbar select{width:auto}
+.list{display:grid;gap:12px}
+.req{position:relative;display:grid;gap:8px;padding:18px 20px;border:1px solid var(--line);border-radius:12px;background:var(--paper);overflow:hidden}
+.req.fresh{border-color:var(--amber);box-shadow:0 0 0 3px var(--amber-soft)}
+.req .head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
+.req .t{font-weight:700;font-size:1.05rem}
+.req .det{font-weight:500;color:var(--ink-2)}
+.req .meta{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.84rem;color:var(--ink-2)}
+.req .num{font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.req .desc{overflow-wrap:anywhere;max-width:70ch}
+.req .note{font-size:.9rem;padding:8px 12px;border-left:3px solid var(--line);color:var(--ink-2)}
+
+/* штамп — головний візуальний елемент */
+.stamp{flex:none;font:700 .8rem/1 var(--display);text-transform:uppercase;letter-spacing:.06em;padding:8px 12px;border:2.5px solid currentColor;border-radius:6px;
+  transform:rotate(-5deg);opacity:.9;mix-blend-mode:multiply;
+  -webkit-mask-image:radial-gradient(circle at 30% 40%,#000 62%,rgba(0,0,0,.72) 63%,#000 75%);
+  mask-image:radial-gradient(circle at 30% 40%,#000 62%,rgba(0,0,0,.72) 63%,#000 75%)}
+@media (prefers-color-scheme:dark){.stamp{mix-blend-mode:normal}}
+.stamp.ok{color:var(--ok)} .stamp.no{color:var(--no)}
+.stamp.new{animation:stampIn .45s cubic-bezier(.2,1.6,.4,1) both}
+@keyframes stampIn{from{transform:rotate(-5deg) scale(1.9);opacity:0}to{transform:rotate(-5deg) scale(1);opacity:.9}}
+.wait{flex:none;font-size:.8rem;font-weight:600;padding:6px 10px;border-radius:999px;border:1px solid var(--amber);color:var(--ink);background:var(--amber-soft);white-space:nowrap}
+
+/* документи — скріпки */
+.docs{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button.doc{display:inline-flex;gap:8px;align-items:center;font:500 .86rem/1.2 var(--body);padding:7px 12px;border-radius:8px;background:var(--paper-2);border:1px solid var(--line)}
+button.doc svg{flex:none;color:var(--ink-2)}
+button.doc .sz{color:var(--ink-2);font-weight:400}
+.acts{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding-top:10px;border-top:1px dashed var(--line)}
+.acts input[type=text]{flex:1 1 240px;width:auto}
+.empty{color:var(--ink-2);text-align:center;padding:32px 0}
+@media (max-width:640px){
+  .sheet{padding:18px} .types{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .tabs{padding-left:4px} .tab{padding:10px 12px 11px;font-size:.9rem}
+  .who{border-radius:14px;width:100%;justify-content:space-between}
+  .req{padding:16px} .req .head{flex-direction:column-reverse;gap:8px}
+}
+@media (prefers-reduced-motion:reduce){.stamp.new{animation:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <svg width="44" height="44" viewBox="0 0 44 44" aria-hidden="true"><path d="M8 28a14 14 0 0 1 28 0" fill="none" stroke="var(--amber)" stroke-width="4" stroke-linecap="round"/><path d="M4 33h36" stroke="var(--ink)" stroke-width="4" stroke-linecap="round"/></svg>
+      <div>
+        <h1>Заявки й документи</h1>
+        <p class="sub">Горизонт Груп: відпустки, відрядження, закупівлі та IT-запити з погодженням керівника</p>
+      </div>
+    </div>
+    <div class="who" id="who" hidden>
+      <div><span class="nm" id="whoName"></span><span class="dp" id="whoDept"></span></div>
+      <span class="role" id="whoRole"></span>
+      <button class="ghost" id="logout">Вийти</button>
+    </div>
+  </header>
+
+  <div class="notice" id="notice" hidden></div>
+
+  <section class="sheet" id="loginCard">
+    <div class="login">
+      <h2>Увійдіть, щоб подати або погодити заявку</h2>
+      <p class="msg">Вхід через Google-акаунт. Хто ви й що можете робити, визначає сервер за списком співробітників.</p>
+      <div id="gbtn"></div>
+      <div id="demoBox" hidden>
+        <p class="msg"><b>Демо-режим:</b> сервер ще не підключено, дані зберігаються лише в цій вкладці.</p>
+        <div class="demo">
+          <button data-demo="olena@horyzont.example">Увійти як Олена (працівник)</button>
+          <button data-demo="ivan@horyzont.example">Увійти як Іван (керівник)</button>
+        </div>
+      </div>
+      <p class="msg err" id="loginErr"></p>
+    </div>
+  </section>
+
+  <section class="folder" id="app" hidden>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="new" aria-selected="true">Нова заявка</button>
+      <button class="tab" role="tab" data-tab="mine" aria-selected="false">Мої заявки</button>
+      <button class="tab" role="tab" data-tab="team" aria-selected="false" hidden>Погодження<span class="count" id="pendN" hidden></span></button>
+    </div>
+    <div class="sheet">
+
+    <div id="tab-new">
+      <form class="form" id="newForm" novalidate>
+        <fieldset class="types" id="fType">
+          <legend>Що потрібно</legend>
+          <label><input type="radio" name="type" value="Відпустка" checked><span>Відпустка<small>дати</small></span></label>
+          <label><input type="radio" name="type" value="Відрядження"><span>Відрядження<small>дати й кошторис</small></span></label>
+          <label><input type="radio" name="type" value="Закупівля"><span>Закупівля<small>сума</small></span></label>
+          <label><input type="radio" name="type" value="IT-запит"><span>IT-запит<small>лише опис</small></span></label>
+        </fieldset>
+        <div class="grid2" id="fDates">
+          <label>Дата початку<input type="date" name="date_from"></label>
+          <label>Дата завершення<input type="date" name="date_to"></label>
+        </div>
+        <label id="fAmount">Сума, грн<input type="number" name="amount" min="0" step="0.01" inputmode="decimal" placeholder="0,00"></label>
+        <label>Опис<textarea name="description" maxlength="500" placeholder="Що потрібно і навіщо"></textarea></label>
+        <div class="drop" id="fDrop">
+          <b>Додайте документи, якщо вони потрібні</b>
+          <span class="hint">Перетягніть файли сюди або натисніть, щоб обрати. До 3 файлів PDF, JPG, PNG, DOCX чи XLSX, до 5 МБ кожен.</span>
+          <input type="file" name="files" id="fFiles" multiple accept=".pdf,.jpg,.jpeg,.png,.docx,.xlsx" aria-label="Документи до заявки">
+          <ul class="chosen" id="fChosen"></ul>
+        </div>
+        <div class="row"><button class="primary" type="submit" id="sendBtn">Подати заявку</button><p class="msg" id="newMsg"></p></div>
+      </form>
+    </div>
+
+    <div id="tab-mine" hidden><div class="toolbar"><p class="msg" id="mineMsg"></p></div><div class="list" id="mineList"></div></div>
+
+    <div id="tab-team" hidden>
+      <div class="toolbar"><p class="msg">Заявки вашого підрозділу. Власні заявки погоджує інший керівник.</p>
+        <select id="teamFilter" aria-label="Фільтр за статусом">
+          <option value="На погодженні">На погодженні</option><option value="">Усі</option>
+          <option value="Погоджено">Погоджено</option><option value="Відхилено">Відхилено</option>
+        </select>
+      </div>
+      <div class="list" id="teamList"></div>
+    </div>
+    </div>
+  </section>
+</div>
+
+<script>
+"use strict";
+// ===== НАЛАШТУВАННЯ =====
+const GOOGLE_CLIENT_ID = "";   // ваш OAuth Client ID з Google Cloud (…apps.googleusercontent.com)
+const API_URL = "";            // Production URL вебхука n8n. Порожньо — демо-режим без сервера
+// ========================
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const DEMO = !API_URL;
+let credential = null, user = null, requests = [];
+
+// ---------- зв'язок із сервером ----------
+// Простий POST (form-urlencoded), щоб браузер не робив попередній CORS-запит.
+async function api(action, payload = {}, files = []) {
+  if (DEMO) return demoServer(action, payload, files);
+  let body;
+  if (files.length) {            // multipart: теж «простий» запит, без попереднього CORS-запиту
+    body = new FormData();
+    body.append("credential", credential || ""); body.append("action", action); body.append("payload", JSON.stringify(payload));
+    files.forEach((f, i) => body.append("file" + i, f, f.name));
+  } else body = new URLSearchParams({ credential: credential || "", action, payload: JSON.stringify(payload) });
+  let res;
+  try { res = await fetch(API_URL, { method: "POST", body }); }
+  catch (e) { return { status: 0, data: { error: "network" } }; }
+  let data = {}; try { data = await res.json(); } catch (e) {}
+  return { status: res.status, data };
+}
+window.api = api; // для перевірки в консолі браузера (етап 3)
+
+// Документ віддає сервер лише після перевірки прав. Відповідь — сам файл або JSON з помилкою.
+async function apiFile(id, file_id) {
+  if (DEMO) return demoServer("file", { id, file_id });
+  let res;
+  try { res = await fetch(API_URL, { method: "POST", body: new URLSearchParams({ credential: credential || "", action: "file", payload: JSON.stringify({ id, file_id }) }) }); }
+  catch (e) { return { status: 0, data: { error: "network" } }; }
+  const ct = res.headers.get("content-type") || "";
+  if (res.ok && !ct.includes("application/json")) return { status: res.status, blob: await res.blob() };
+  let data = {}; try { data = await res.json(); } catch (e) {}
+  return { status: res.ok ? 500 : res.status, data };
+}
+window.apiFile = apiFile;
+
+// ---------- документи: ті самі обмеження, що й на сервері (тут — лише для зручності) ----------
+const DOC_EXT = ["pdf", "jpg", "jpeg", "png", "docx", "xlsx"];
+const MAX_FILE = 5 * 1024 * 1024, MAX_TOTAL = 10 * 1024 * 1024, MAX_FILES = 3;
+function checkFiles(files, already = 0) {
+  if (already + files.length > MAX_FILES) return `До заявки можна додати не більше ${MAX_FILES} документів`;
+  let total = 0;
+  for (const f of files) {
+    const ext = (f.name.split(".").pop() || "").toLowerCase();
+    if (!f.name.includes(".") || !DOC_EXT.includes(ext)) return `Файл «${f.name}»: дозволені лише PDF, JPG, PNG, DOCX, XLSX`;
+    if (!f.size) return `Файл «${f.name}» порожній`;
+    if (f.size > MAX_FILE) return `Файл «${f.name}» більший за 5 МБ`;
+    total += f.size;
+  }
+  if (total > MAX_TOTAL) return "Разом документи мають бути не більші за 10 МБ";
+  return "";
+}
+const fmtSize = (b) => b >= 1048576 ? (b / 1048576).toFixed(1).replace(".", ",") + " МБ" : Math.max(1, Math.round(b / 1024)) + " КБ";
+
+// ---------- демо-сервер: ті самі правила, що в n8n ----------
+const demo = {
+  me: null,
+  people: [
+    { email: "olena@horyzont.example", name: "Олена Ткач", department: "Горизонт Логістик · Склад", role: "працівник" },
+    { email: "petro@horyzont.example", name: "Петро Савчук", department: "Горизонт Логістик · Склад", role: "працівник" },
+    { email: "ivan@horyzont.example", name: "Іван Литвин", department: "Горизонт Логістик · Склад", role: "керівник" },
+  ],
+  rows: [
+    { id: "Z-20261103-K7Q2", created_at: "2026-11-03T08:12:00Z", author_email: "petro@horyzont.example", author_name: "Петро Савчук", department: "Горизонт Логістик · Склад", type: "Закупівля", date_from: "", date_to: "", amount: 18450, description: "Сканери штрихкодів, 3 шт., для зони приймання", status: "На погодженні", approver_email: "", decided_at: "", comment: "" },
+    { id: "Z-20261028-M1AA", created_at: "2026-10-28T09:40:00Z", author_email: "olena@horyzont.example", author_name: "Олена Ткач", department: "Горизонт Логістик · Склад", type: "Відпустка", date_from: "2026-11-17", date_to: "2026-11-21", amount: "", description: "Щорічна відпустка", status: "Погоджено", approver_email: "ivan@horyzont.example", decided_at: "2026-10-29T07:30:00Z", comment: "" },
+  ],
+};
+demo.blobs = {};
+function demoSave(files, id, start) {
+  return files.map((f, i) => { const file_id = "demo-" + Math.random().toString(36).slice(2, 10); demo.blobs[file_id] = f;
+    return { file_id, name: f.name, size: f.size, type: (f.name.split(".").pop() || "").toLowerCase() }; });
+}
+function demoServer(action, p, files = []) {
+  const u = demo.me; if (!u) return { status: 401, data: { error: "unauthorized" } };
+  if (action === "me") return { status: 200, data: { user: u } };
+  if (action === "list") {
+    const vis = demo.rows.filter((r) => u.role === "керівник" ? r.department === u.department : r.author_email === u.email)
+      .map((r) => ({ ...r, files: r.files || [], can_attach: r.author_email === u.email && r.status === "На погодженні", can_decide: u.role === "керівник" && r.author_email !== u.email && r.status === "На погодженні" }))
+      .sort((a, b) => b.created_at.localeCompare(a.created_at));
+    return { status: 200, data: { user: u, requests: vis } };
+  }
+  if (action === "create") {
+    const err = validate(p) || checkFiles(files); if (err) return { status: 400, data: { error: "validation", message: err } };
+    const id = "Z-" + new Date().toISOString().slice(0, 10).replace(/-/g, "") + "-" + Math.random().toString(36).slice(2, 6).toUpperCase();
+    demo.rows.push({ id, created_at: new Date().toISOString(), author_email: u.email, author_name: u.name, department: u.department, type: p.type,
+      date_from: p.date_from || "", date_to: p.date_to || "", amount: p.amount ? +p.amount : "", description: p.description.trim(), status: "На погодженні", approver_email: "", decided_at: "", comment: "", files: demoSave(files) });
+    return { status: 200, data: { ok: true, id } };
+  }
+  if (action === "decide") {
+    const r = demo.rows.find((x) => x.id === p.id);
+    if (u.role !== "керівник") return { status: 403, data: { message: "Погоджувати заявки може лише керівник" } };
+    if (!r) return { status: 404, data: { message: "Заявку не знайдено" } };
+    if (r.author_email === u.email) return { status: 403, data: { message: "Не можна погоджувати власну заявку" } };
+    if (r.status !== "На погодженні") return { status: 409, data: { message: "Заявку вже розглянуто" } };
+    if (p.decision === "reject" && String(p.comment || "").trim().length < 3) return { status: 400, data: { message: "Вкажіть причину відмови" } };
+    Object.assign(r, { status: p.decision === "approve" ? "Погоджено" : "Відхилено", approver_email: u.email, decided_at: new Date().toISOString(), comment: String(p.comment || "").trim() });
+    return { status: 200, data: { ok: true } };
+  }
+  if (action === "attach") {
+    const r = demo.rows.find((x) => x.id === p.id);
+    if (!r) return { status: 404, data: { message: "Заявку не знайдено" } };
+    if (r.author_email !== u.email) return { status: 403, data: { message: "Додавати документи може лише автор заявки" } };
+    if (r.status !== "На погодженні") return { status: 409, data: { message: "Заявку вже розглянуто, документи змінювати не можна" } };
+    if (!files.length) return { status: 400, data: { message: "Оберіть документ" } };
+    const err = checkFiles(files, (r.files || []).length); if (err) return { status: 400, data: { message: err } };
+    r.files = [...(r.files || []), ...demoSave(files)];
+    return { status: 200, data: { ok: true, id: r.id } };
+  }
+  if (action === "file") {
+    const r = demo.rows.find((x) => x.id === p.id);
+    if (!r) return { status: 404, data: { message: "Заявку не знайдено" } };
+    if (!(r.author_email === u.email || (u.role === "керівник" && r.department === u.department))) return { status: 403, data: { message: "Немає доступу до документів цієї заявки" } };
+    const f = (r.files || []).find((x) => x.file_id === p.file_id);
+    if (!f) return { status: 404, data: { message: "Документ не знайдено" } };
+    return { status: 200, blob: demo.blobs[f.file_id] };
+  }
+  return { status: 400, data: { error: "unknown_action" } };
+}
+
+// ---------- перевірка форми (лише для зручності; справжня — на сервері) ----------
+function validate(p) {
+  const needDates = p.type === "Відпустка" || p.type === "Відрядження";
+  if (needDates && (!p.date_from || !p.date_to)) return "Вкажіть дати початку й завершення";
+  if (needDates && p.date_to < p.date_from) return "Дата завершення раніша за дату початку";
+  if (p.type === "Закупівля" && !(+p.amount > 0)) return "Вкажіть суму закупівлі";
+  if (String(p.description || "").trim().length < 3) return "Опишіть заявку";
+  return "";
+}
+
+// ---------- вхід ----------
+function notice(t) { $("notice").hidden = !t; $("notice").textContent = t || ""; }
+function showLogin(err) {
+  user = null; credential = null;
+  $("loginCard").hidden = false; $("app").hidden = true; $("who").hidden = true;
+  $("loginErr").textContent = err || "";
+}
+async function afterLogin() {
+  const r = await api("me");
+  if (r.status === 200) { user = r.data.user; startApp(); return; }
+  if (r.status === 403) showLogin(`Акаунт ${r.data.email || ""} не має доступу. Зверніться до адміністратора списку співробітників.`);
+  else if (r.status === 0) showLogin("Сервер недоступний. Перевірте адресу API і з'єднання.");
+  else showLogin("Не вдалося підтвердити вхід. Спробуйте ще раз.");
+}
+function initGoogle() {
+  if (DEMO) { $("demoBox").hidden = false; return; }
+  if (!GOOGLE_CLIENT_ID) { $("loginErr").textContent = "Не задано GOOGLE_CLIENT_ID у налаштуваннях сторінки."; return; }
+  if (!window.google || !google.accounts) { setTimeout(initGoogle, 300); return; }
+  google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, auto_select: true,
+    callback: (resp) => { credential = resp.credential; afterLogin(); } });
+  google.accounts.id.renderButton($("gbtn"), { theme: "outline", size: "large", text: "signin_with", locale: "uk" });
+  google.accounts.id.prompt();
+}
+document.querySelectorAll("[data-demo]").forEach((b) => b.onclick = () => {
+  demo.me = demo.people.find((p) => p.email === b.dataset.demo); afterLogin();
+});
+$("logout").onclick = () => {
+  if (!DEMO && window.google && google.accounts) google.accounts.id.disableAutoSelect();
+  demo.me = null; showLogin();
+};
+
+// ---------- застосунок ----------
+function startApp() {
+  $("loginCard").hidden = true; $("app").hidden = false; $("who").hidden = false;
+  $("whoName").textContent = user.name; $("whoDept").textContent = user.department; $("whoRole").textContent = user.role;
+  document.querySelector('[data-tab="team"]').hidden = user.role !== "керівник";
+  load();
+}
+async function load() {
+  const r = await api("list");
+  if (r.status === 401) return showLogin("Сесія завершилась. Увійдіть ще раз.");
+  if (r.status !== 200) { notice("Не вдалося завантажити заявки."); return; }
+  notice(""); requests = r.data.requests || []; render();
+}
+const fresh = new Set(); // заявки, рішення по яких щойно ухвалено: штамп «ставиться» з анімацією
+const statusPill = (s, id) => s === "На погодженні" ? `<span class="wait">на погодженні</span>`
+  : `<span class="stamp ${s === "Погоджено" ? "ok" : "no"}${fresh.has(id) ? " new" : ""}">${esc(s)}</span>`;
+const CLIP = '<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.5l-8.6 8.6a5 5 0 0 1-7.1-7.1l9.2-9.2a3.3 3.3 0 0 1 4.7 4.7l-9.2 9.2a1.7 1.7 0 0 1-2.4-2.4l8.5-8.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+const fmtDate = (d) => { const m = String(d || "").match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? `${m[3]}.${m[2]}.${m[1]}` : String(d || ""); };
+const fmtMoney = (a) => { if (a === "" || a == null) return ""; const n = Number(a); return isNaN(n) ? String(a) + " грн" : n.toLocaleString("uk-UA", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " грн"; };
+function reqCard(r, withActs) {
+  const details = [r.date_from && `${fmtDate(r.date_from)} — ${fmtDate(r.date_to)}`, fmtMoney(r.amount)].filter(Boolean).join(", ");
+  const files = r.files || [];
+  return `<article class="req">
+    <div class="head">
+      <div><span class="t">${esc(r.type)}</span>${details ? ` <span class="det">${esc(details)}</span>` : ""}</div>
+      ${statusPill(r.status, r.id)}
+    </div>
+    <div class="meta"><span class="num">${esc(r.id)}</span><span>${esc(r.author_name)}</span><span>подано ${fmtDate(r.created_at)}</span>${r.decided_at ? `<span>рішення ${fmtDate(r.decided_at)}</span>` : ""}</div>
+    <div class="desc">${esc(r.description)}</div>
+    ${r.comment ? `<div class="note">Коментар керівника: ${esc(r.comment)}</div>` : ""}
+    ${files.length ? `<div class="docs">${files.map((f) =>
+      `<button class="doc" data-f="${esc(f.file_id)}" data-rid="${esc(r.id)}" data-name="${esc(f.name)}" title="Завантажити">${CLIP}${esc(f.name)} <span class="sz">${fmtSize(f.size)}</span></button>`).join("")}</div>` : ""}
+    ${!withActs && r.can_attach && files.length < MAX_FILES ? `<div class="acts">
+      <input type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.docx,.xlsx" data-af="${esc(r.id)}" hidden>
+      <button data-attach="${esc(r.id)}">Додати документ</button><span class="hint">ще ${MAX_FILES - files.length} з ${MAX_FILES}</span></div>` : ""}
+    ${withActs && r.can_decide ? `<div class="acts"><input type="text" placeholder="Коментар (обов'язковий для відмови)" data-c="${esc(r.id)}" maxlength="300" aria-label="Коментар до рішення">
+      <button class="okb" data-d="approve" data-id="${esc(r.id)}">Погодити</button><button class="nob" data-d="reject" data-id="${esc(r.id)}">Відхилити</button></div>
+      <p class="msg err" data-e="${esc(r.id)}"></p>` : ""}
+    <p class="msg err" data-fe="${esc(r.id)}"></p>
+  </article>`;
+}
+function render() {
+  const mine = requests.filter((r) => String(r.author_email).toLowerCase() === user.email);
+  $("mineList").innerHTML = mine.length ? mine.map((r) => reqCard(r, false)).join("") : `<p class="empty">Ви ще не подавали заявок.</p>`;
+  if (user.role === "керівник") {
+    const pend = requests.filter((r) => r.can_decide).length;
+    $("pendN").hidden = !pend; $("pendN").textContent = pend;
+    const f = $("teamFilter").value;
+    const team = requests.filter((r) => !f || r.status === f);
+    $("teamList").innerHTML = team.length ? team.map((r) => reqCard(r, true)).join("") : `<p class="empty">Заявок немає.</p>`;
+    $("teamList").querySelectorAll("[data-d]").forEach((b) => b.onclick = () => decide(b.dataset.id, b.dataset.d));
+  }
+  document.querySelectorAll("[data-f]").forEach((b) => b.onclick = () => openDoc(b));
+  document.querySelectorAll("[data-attach]").forEach((b) => {
+    const inp = document.querySelector(`[data-af="${CSS.escape(b.dataset.attach)}"]`);
+    b.onclick = () => inp.click();
+    inp.onchange = () => { if (inp.files.length) attach(b.dataset.attach, b); };
+  });
+}
+async function openDoc(b) {
+  const e = document.querySelector(`#${b.closest(".list").id} [data-fe="${CSS.escape(b.dataset.rid)}"]`);
+  e.textContent = ""; b.disabled = true;
+  const r = await apiFile(b.dataset.rid, b.dataset.f);
+  b.disabled = false;
+  if (r.status === 200 && r.blob) {
+    const url = URL.createObjectURL(r.blob);
+    const a = document.createElement("a"); a.href = url; a.download = b.dataset.name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000); return;
+  }
+  if (r.status === 401) return showLogin("Сесія завершилась. Увійдіть ще раз.");
+  e.textContent = (r.data && r.data.message) || "Не вдалося відкрити документ.";
+}
+async function attach(id, b) {
+  const inp = document.querySelector(`[data-af="${CSS.escape(id)}"]`);
+  const e = document.querySelector(`#mineList [data-fe="${CSS.escape(id)}"]`);
+  const files = [...inp.files]; const r0 = requests.find((x) => x.id === id);
+  const err = files.length ? checkFiles(files, (r0.files || []).length) : "Оберіть документ";
+  if (err) { e.textContent = err; return; }
+  b.disabled = true; e.className = "msg"; e.textContent = "Завантажую…";
+  const r = await api("attach", { id }, files);
+  b.disabled = false; e.className = "msg err";
+  if (r.status === 200 && r.data && r.data.ok) { await load(); return; }
+  if (r.status === 401) return showLogin("Сесія завершилась. Увійдіть ще раз.");
+  e.textContent = (r.data && r.data.message) || "Не вдалося додати документ.";
+}
+async function decide(id, decision) {
+  const comment = document.querySelector(`[data-c="${CSS.escape(id)}"]`).value;
+  const e = document.querySelector(`[data-e="${CSS.escape(id)}"]`);
+  if (decision === "reject" && comment.trim().length < 3) { e.textContent = "Вкажіть причину відмови."; return; }
+  document.querySelectorAll(`[data-id="${CSS.escape(id)}"]`).forEach((b) => b.disabled = true);
+  const r = await api("decide", { id, decision, comment });
+  if (r.status === 200 && r.data && r.data.ok) { fresh.add(id); return load(); }
+  if (r.status === 200) { console.warn("decide: неочікувана відповідь", r); r.data = { message: "Сервер не підтвердив, що рішення збережено. Перевірте останній запуск у n8n (Executions)." }; }
+  if (r.status === 401) return showLogin("Сесія завершилась. Увійдіть ще раз.");
+  e.textContent = r.data.message || "Не вдалося зберегти рішення.";
+  document.querySelectorAll(`[data-id="${CSS.escape(id)}"]`).forEach((b) => b.disabled = false);
+}
+function syncForm() {
+  const t = (document.querySelector('input[name="type"]:checked') || {}).value;
+  $("fDates").hidden = !(t === "Відпустка" || t === "Відрядження");
+  $("fAmount").hidden = !(t === "Закупівля" || t === "Відрядження");
+}
+$("fType").onchange = syncForm; syncForm();
+function showChosen() {
+  const fs = [...$("fFiles").files];
+  $("fChosen").innerHTML = fs.map((f) => `<li>${esc(f.name)} <span class="hint">${fmtSize(f.size)}</span></li>`).join("");
+}
+$("fFiles").onchange = showChosen;
+["dragenter", "dragover"].forEach((ev) => $("fDrop").addEventListener(ev, () => $("fDrop").classList.add("over")));
+["dragleave", "drop"].forEach((ev) => $("fDrop").addEventListener(ev, () => $("fDrop").classList.remove("over")));
+$("newForm").onsubmit = async (ev) => {
+  ev.preventDefault();
+  const fd = new FormData(ev.target); const t = fd.get("type");
+  const p = { type: t, description: fd.get("description") };
+  if (!$("fDates").hidden) { p.date_from = fd.get("date_from"); p.date_to = fd.get("date_to"); }
+  if (!$("fAmount").hidden) p.amount = fd.get("amount");
+  const files = [...$("fFiles").files];
+  const err = validate(p) || checkFiles(files); const m = $("newMsg");
+  if (err) { m.className = "msg err"; m.textContent = err; return; }
+  $("sendBtn").disabled = true; m.className = "msg"; m.textContent = "Надсилаю…";
+  const r = await api("create", p, files);
+  $("sendBtn").disabled = false;
+  if (r.status === 200 && r.data && r.data.ok && r.data.id) {
+    ev.target.reset(); syncForm(); showChosen(); m.textContent = "";
+    await load(); openTab("mine");
+    const card = [...document.querySelectorAll("#mineList .req")].find((c) => c.textContent.includes(r.data.id));
+    if (card) card.classList.add("fresh");
+    $("mineMsg").className = "msg ok";
+    $("mineMsg").textContent = card ? `Заявку № ${r.data.id} подано на погодження керівнику підрозділу.`
+      : `Сервер прийняв заявку № ${r.data.id}, але її немає в списку. Перевірте рядок в аркуші «Заявки».`;
+  }
+  else if (r.status === 200) { m.className = "msg err"; m.textContent = "Сервер не підтвердив, що заявку збережено. Перевірте останній запуск у n8n (Executions)."; console.warn("create: неочікувана відповідь", r); }
+  else if (r.status === 401) showLogin("Сесія завершилась. Увійдіть ще раз.");
+  else { m.className = "msg err"; m.textContent = r.data.message || "Не вдалося подати заявку."; }
+};
+function openTab(k) {
+  document.querySelectorAll(".tab").forEach((x) => x.setAttribute("aria-selected", String(x.dataset.tab === k)));
+  ["new", "mine", "team"].forEach((x) => $("tab-" + x).hidden = x !== k);
+}
+document.querySelectorAll(".tab").forEach((t) => t.onclick = () => {
+  openTab(t.dataset.tab); $("mineMsg").textContent = "";
+  if (t.dataset.tab !== "new") load();
+});
+$("teamFilter").onchange = render;
+initGoogle();
+</script>
+</body>
+</html>
